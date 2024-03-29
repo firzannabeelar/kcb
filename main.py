@@ -7,7 +7,8 @@ from sklearn.decomposition import LatentDirichletAllocation
 import matplotlib.pyplot as plt
 
 
-# Fungsi untuk melakukan preprocessing teks (tokenisasi, menghilangkan stopwords, dan stemming)
+# preprocessing teks 
+
 def preprocess_text(text):
     factory = StopWordRemoverFactory()
     stopword_remover = factory.create_stop_word_remover()
@@ -19,7 +20,8 @@ def preprocess_text(text):
     tokens = [stemmer.stem(word) for word in tokens]
     return ' '.join(tokens)
 
-# Fungsi untuk melakukan sentiment analysis menggunakan Polarity Lexicon
+#  sentiment analysis Polarity Lexicon
+
 def analyze_sentiment(text):
     positive_words = set(open("positive_words.txt", "r").read().splitlines())
     negative_words = set(open("negative_words.txt", "r").read().splitlines())
@@ -33,7 +35,8 @@ def analyze_sentiment(text):
     else:
         return 'netral'
 
-# Fungsi untuk melakukan topic modeling menggunakan Latent Dirichlet Allocation (LDA)
+# topic modeling - Latent Dirichlet Allocation (LDA)
+    
 def perform_topic_modeling(data):
     vectorizer = CountVectorizer(max_df=0.95, min_df=2, stop_words=None)
     tf = vectorizer.fit_transform(data)
@@ -53,22 +56,33 @@ def perform_topic_modeling(data):
     return topics
 
 # Membaca data ulasan dari file CSV
+
 with open('google.csv', 'r', encoding='utf-8') as file:
     data = file.readlines()
 
+
 # Membuat DataFrame dari data
+    
 df = pd.DataFrame(data, columns=['Ulasan'])
 
+
 # Preprocessing teks
+
 df['Preprocessed_Ulasan'] = df['Ulasan'].apply(preprocess_text)
 
+
 # Analisis sentimen
+
 df['Sentimen'] = df['Preprocessed_Ulasan'].apply(analyze_sentiment)
 
+
 # Menampilkan hasil analisis sentimen
+
 print("\nHasil Analisis Sentimen:\n", df[['Ulasan', 'Sentimen']])
 
+
 # Topic modeling
+
 topics = perform_topic_modeling(df['Preprocessed_Ulasan'])
 
 print("\nTopik dari Ulasan UPN 'Veteran' Jawa Timur:")
@@ -77,6 +91,7 @@ for idx, features in enumerate(topics):
 
 
 # Kesimpulan
+
 positif_count = df['Sentimen'].value_counts().get('positif', 0)
 negatif_count = df['Sentimen'].value_counts().get('negatif', 0)
 netral_count = df['Sentimen'].value_counts().get('netral', 0)
@@ -94,7 +109,8 @@ else:
     print("Ulasan dalam dataset menunjukkan mayoritas sentimen NETRAL.")
 
 
-# Membuat grafik banyaknya topic yang dibahas dalam ulasan
+# grafik topic modeling
+    
 topics_list = [topic for sublist in topics for topic in sublist]
 topic_counts = pd.Series(topics_list).value_counts()
 

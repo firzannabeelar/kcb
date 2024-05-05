@@ -7,7 +7,7 @@ from sklearn.decomposition import LatentDirichletAllocation
 import matplotlib.pyplot as plt
 
 
-# preprocessing teks 
+# preprocessing teks (tokenisasi, stopwords, dan stemming)
 
 def preprocess_text(text):
     factory = StopWordRemoverFactory()
@@ -15,12 +15,12 @@ def preprocess_text(text):
     factory = StemmerFactory()
     stemmer = factory.create_stemmer()
     tokens = word_tokenize(text)
-    tokens = [word for word in tokens if word.isalpha()]  # Hanya kata-kata yang alfabet saja
+    tokens = [word for word in tokens if word.isalpha()] 
     tokens = [stopword_remover.remove(word) for word in tokens]
     tokens = [stemmer.stem(word) for word in tokens]
     return ' '.join(tokens)
 
-#  sentiment analysis Polarity Lexicon
+# sentiment analysis menggunakan Polarity Lexicon
 
 def analyze_sentiment(text):
     positive_words = set(open("positive_words.txt", "r").read().splitlines())
@@ -34,9 +34,9 @@ def analyze_sentiment(text):
         return 'negatif'
     else:
         return 'netral'
-
-# topic modeling - Latent Dirichlet Allocation (LDA)
     
+#  topic modeling menggunakan Latent Dirichlet Allocation (LDA)
+
 def perform_topic_modeling(data):
     vectorizer = CountVectorizer(max_df=0.95, min_df=2, stop_words=None)
     tf = vectorizer.fit_transform(data)
@@ -55,31 +55,31 @@ def perform_topic_modeling(data):
             
     return topics
 
+def plot_topic_modeling(topics, sentiment):
+    plt.figure(figsize=(10, 6))
+    plt.barh(list(topics.keys()), list(topics.values()), color='skyblue')
+    plt.xlabel('Jumlah Kata')
+    plt.ylabel('Kata')
+    plt.title(f'Diagram Topic Modeling {sentiment.capitalize()}')
+    plt.show()
+
 # Membaca data ulasan dari file CSV
 
 with open('google.csv', 'r', encoding='utf-8') as file:
     data = file.readlines()
 
-
 # Membuat DataFrame dari data
     
 df = pd.DataFrame(data, columns=['Ulasan'])
-
 
 # Preprocessing teks
 
 df['Preprocessed_Ulasan'] = df['Ulasan'].apply(preprocess_text)
 
-
 # Analisis sentimen
 
 df['Sentimen'] = df['Preprocessed_Ulasan'].apply(analyze_sentiment)
-
-
-# Menampilkan hasil analisis sentimen
-
 print("\nHasil Analisis Sentimen:\n", df[['Ulasan', 'Sentimen']])
-
 
 # Topic modeling
 
@@ -91,7 +91,7 @@ for idx, features in enumerate(topics):
 
 
 # Kesimpulan
-
+    
 positif_count = df['Sentimen'].value_counts().get('positif', 0)
 negatif_count = df['Sentimen'].value_counts().get('negatif', 0)
 netral_count = df['Sentimen'].value_counts().get('netral', 0)
@@ -109,17 +109,20 @@ else:
     print("Ulasan dalam dataset menunjukkan mayoritas sentimen NETRAL.")
 
 
-# grafik topic modeling
+# grafik topic ulasan
     
-topics_list = [topic for sublist in topics for topic in sublist]
-topic_counts = pd.Series(topics_list).value_counts()
-
-plt.figure(figsize=(10,6))
-topic_counts.plot(kind='bar', color='skyblue')
-plt.title('Persentase Topik dalam Ulasan')
-plt.xlabel('Topik')
-plt.ylabel('Jumlah Ulasan')
-plt.xticks(rotation=45)
-plt.tight_layout()
-plt.show()
-
+for sentiment in ['positif', 'negatif', 'netral']:
+    sentiment_df = df[df['Sentimen'] == sentiment]
+    preprocessed_data = sentiment_df['Preprocessed_Ulasan'].tolist()
+    topics = perform_topic_modeling(preprocessed_data)
+    
+    # Flatten topics
+    flattened_topics = {}
+    for topic in topics:
+        for word in topic:
+            flattened_topics[word] = flattened_topics.get(word, 0) + 1
+    
+    # Sort flattened_topics by value (number of occurrences) in descending order
+    sorted_topics = dict(sorted(flattened_topics.items(), key=lambda item: item[1], reverse=False))
+    
+    plot_topic_modeling(sorted_topics, sentiment)
